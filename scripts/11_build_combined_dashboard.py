@@ -446,10 +446,11 @@ for dist_num in sorted(dist_features.keys()):
         except Exception:
             pass
     dissolved = unary_union(shapes)
+    centroid = dissolved.representative_point()  # always inside the polygon
     dd = district_map_data.get(str(dist_num), {})
     district_geo['features'].append({
         "type": "Feature",
-        "properties": {"district": dist_num, **dd},
+        "properties": {"district": dist_num, "centroid_lat": centroid.y, "centroid_lng": centroid.x, **dd},
         "geometry": mapping(dissolved)
     })
 
@@ -762,6 +763,23 @@ new_css = """
 .geo-toggle button:last-child { border-right: none; }
 .geo-toggle button:hover { color: #fff; }
 .geo-toggle button.active { background: rgba(248,152,40,0.3); color: #fff; }
+
+/* ── DISTRICT LABELS ──────────────────────────────────────────── */
+.district-label {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.district-label span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #191a4d;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9),
+                 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9);
+    white-space: nowrap;
+    pointer-events: none;
+}
 
 /* ── NEIGHBORHOOD LABELS ──────────────────────────────────────── */
 .hood-label {
@@ -1280,6 +1298,7 @@ const LAYER_CONFIG = {
 let _currentLayer = 'mean_support_score';
 let _geoLayer = null;
 let _distOverlay = null;
+let _distLabels = null;
 let _geoLevel = 'precinct';
 let _hoodLabels = [];
 
@@ -1398,25 +1417,18 @@ function renderGeoLayer(layerKey) {
     const map = window.leafletMap;
     if (_geoLayer) map.removeLayer(_geoLayer);
     if (_distOverlay) { map.removeLayer(_distOverlay); _distOverlay = null; }
+    if (_distLabels) { map.removeLayer(_distLabels); _distLabels = null; }
     const geoSource = getGeoSource();
     const isPrecinct = _geoLevel === 'precinct';
     _geoLayer = L.geoJSON(geoSource, {
         style: function(feature) {
             const val = getFeatureValue(feature, layerKey);
-            if (isPrecinct) {
-                return {
-                    fillColor: getColor(val, layerKey),
-                    weight: 1,
-                    opacity: 0.8,
-                    color: 'rgba(55,65,81,0.7)',
-                    fillOpacity: 0.8
-                };
-            }
-            // District / citywide: colored fill, NO stroke at all
             return {
                 fillColor: getColor(val, layerKey),
-                stroke: false,
-                fillOpacity: 0.85
+                weight: 1,
+                opacity: 0.8,
+                color: 'rgba(55,65,81,0.7)',
+                fillOpacity: 0.8
             };
         },
         onEachFeature: function(feature, layer) {
@@ -1442,32 +1454,38 @@ function renderGeoLayer(layerKey) {
                 L.popup().setLatLng(e.latlng).setContent(popup).openOn(map);
             });
             layer.on('mouseover', function() {
-                if (isPrecinct) {
-                    this.setStyle({ weight: 2.5, color: '#191a4d' });
-                    this.bringToFront();
-                }
+                this.setStyle({ weight: 2.5, color: '#191a4d' });
+                this.bringToFront();
+                if (_distLabels) _distLabels.eachLayer(function(l){ l.bringToFront(); });
             });
             layer.on('mouseout', function() {
-                if (isPrecinct) _geoLayer.resetStyle(this);
+                _geoLayer.resetStyle(this);
             });
         }
     }).addTo(map);
-    // Overlay district boundary lines (no fill, just outlines)
-    if (_geoLevel === 'precinct' && typeof DISTRICT_GEO !== 'undefined') {
+    // Overlay dashed district boundaries on precinct view
+    if (isPrecinct && typeof DISTRICT_GEO !== 'undefined') {
         _distOverlay = L.geoJSON(DISTRICT_GEO, {
             style: { fill: false, weight: 2.5, color: '#191a4d', opacity: 0.6, dashArray: '6,4' },
             interactive: false
         }).addTo(map);
-    } else if (_geoLevel === 'district' && typeof DISTRICT_GEO !== 'undefined') {
-        _distOverlay = L.geoJSON(DISTRICT_GEO, {
-            style: { fill: false, weight: 2.5, color: '#191a4d', opacity: 0.9 },
-            interactive: false
-        }).addTo(map);
-    } else if (_geoLevel === 'citywide' && typeof CITYWIDE_GEO !== 'undefined') {
-        _distOverlay = L.geoJSON(CITYWIDE_GEO, {
-            style: { fill: false, weight: 3, color: '#191a4d', opacity: 0.9 },
-            interactive: false
-        }).addTo(map);
+    }
+    // District labels on supervisor district view
+    if (_geoLevel === 'district' && typeof DISTRICT_GEO !== 'undefined') {
+        _distLabels = L.layerGroup();
+        DISTRICT_GEO.features.forEach(function(f) {
+            var p = f.properties;
+            if (p.centroid_lat && p.centroid_lng) {
+                var icon = L.divIcon({
+                    className: 'district-label',
+                    html: '<span>District ' + p.district + '</span>',
+                    iconSize: [80, 20],
+                    iconAnchor: [40, 10]
+                });
+                L.marker([p.centroid_lat, p.centroid_lng], { icon: icon, interactive: false }).addTo(_distLabels);
+            }
+        });
+        _distLabels.addTo(map);
     }
     updateLegend(layerKey);
 }
