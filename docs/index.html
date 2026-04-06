@@ -293,8 +293,87 @@ th.num { text-align: right; }
     .controls { padding: 10px 16px; gap: 12px; }
     .container { padding: 16px; }
 }
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+    /* Header */
+    .header { padding: 16px 16px 14px; }
+    .header h1 { font-size: 18px; }
+    .header .logo { max-height: 56px; margin-bottom: 8px; }
+    .header .subtitle { font-size: 11px; }
+
+    /* Nav Tabs - horizontal scroll */
+    .nav-tabs { padding: 0 8px; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .nav-tabs button { padding: 10px 14px; font-size: 12px; white-space: nowrap; }
+
+    /* Controls - stack vertically */
+    .controls { padding: 10px 12px; gap: 8px; flex-direction: column; align-items: stretch; }
+    .control-group { flex-wrap: wrap; gap: 6px; }
+    .control-group select { width: 100%; }
+    .toggle-group { width: 100%; }
+    .toggle-group label.toggle-btn { flex: 1; text-align: center; padding: 8px 8px; }
+
+    /* Container */
+    .container { padding: 12px; }
+
+    /* Summary Cards - 2 col */
+    .cards { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .card { padding: 14px; }
+    .card .card-value { font-size: 22px; }
+    .card .card-label { font-size: 10px; }
+
+    /* Support Cards */
+    .sup-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+    .sup-card .sup-value { font-size: 22px; }
+
+    /* Sub Tabs - scroll */
+    .sub-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+    .sub-tabs button { padding: 10px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+
+    /* Sections */
+    .section { padding: 14px; margin-bottom: 16px; }
+    .section h2 { font-size: 14px; }
+
+    /* Tables - horizontal scroll */
+    table, .sup-table { font-size: 11px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+    th, td { padding: 6px 8px; }
+    .sup-table th, .sup-table td { padding: 6px 10px; }
+
+    /* Charts - shorter */
+    .chart-box { padding: 14px; }
+    .chart-box h3 { font-size: 12px; }
+    .histogram-wrap, .district-chart-wrap, .demo-chart-wrap { height: 250px; }
+    .opp-chart-wrap { width: 100% !important; height: 250px !important; }
+
+    /* Map */
+    #map-container { height: 450px; }
+    .map-header { padding: 12px 14px; font-size: 14px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .map-controls { width: 180px; padding: 10px; top: 10px; right: 10px; font-size: 11px; }
+    .map-controls label { font-size: 11px; gap: 4px; }
+    .map-legend { padding: 8px 12px; bottom: 12px; left: 10px; font-size: 10px; }
+    .legend-bar { width: 140px; }
+
+    /* Geo toggle in map header */
+    .geo-toggle { margin-left: 0; }
+    .geo-toggle button { padding: 4px 10px; font-size: 10px; }
+
+    /* Demo toggle */
+    .demo-toggle { width: 100%; }
+    .demo-toggle button { flex: 1; }
+
+    /* Search row */
+    .search-row { flex-wrap: wrap; }
+    .search-box { width: 100%; }
+}
+@media (max-width: 480px) {
     .cards { grid-template-columns: 1fr; }
+    .sup-cards { grid-template-columns: 1fr !important; }
+    .card .card-value { font-size: 24px; }
+    .sup-card .sup-value { font-size: 24px; }
+    .header h1 { font-size: 16px; }
+    .nav-tabs button { padding: 8px 10px; font-size: 11px; letter-spacing: 0.5px; }
+    #map-container { height: 380px; }
+    .map-controls { width: 160px; padding: 8px; }
+    .map-header { font-size: 13px; border-radius: 8px 8px 0 0; }
+    .histogram-wrap, .district-chart-wrap, .demo-chart-wrap { height: 220px; }
 }
 
 /* ── TAB NAVIGATION ────────────────────────────────────────────── */
@@ -599,10 +678,14 @@ th.num { text-align: right; }
     pointer-events: none;
 }
 
-@media (max-width: 900px) {
-    .sup-cards { grid-template-columns: repeat(2, 1fr); }
-}
+/* sup-cards responsive handled in main @media blocks above */
 
+
+/* ── EXTRA MOBILE FIXES ────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .map-tab-container { padding: 12px !important; }
+    .universe-desc { font-size: 12px !important; padding: 12px 14px !important; }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -817,7 +900,7 @@ th.num { text-align: right; }
 
     <!-- Overview Sub-tab -->
     <div class="sub-content active" id="sub-overview">
-        <div style="margin-bottom:20px;padding:16px 20px;background:#f8f9fa;border-radius:8px;font-size:13px;line-height:1.7;color:#374151;">
+        <div style="margin-bottom:20px;padding:16px 20px;background:#f8f9fa;border-radius:8px;font-size:13px;line-height:1.7;color:#374151;" class="universe-desc">
             <strong style="color:#191a4d;">Base</strong> voters are reliable Scott Wiener supporters — liberal-to-moderate Democrats, often LGBTQ+ allied, concentrated in Districts 2, 3, 6, 7, and 8.
             <br><br>
             <strong style="color:#f89828;">Persuasion</strong> voters are reachable but not yet committed — moderate Democrats and NPP voters who could go either way based on campaign contact.
@@ -913,7 +996,7 @@ th.num { text-align: right; }
 
 <!-- ── MAP TAB ───────────────────────────────────────────────────── -->
 <div class="tab-content" id="tab-map">
-<div style="max-width:1400px;margin:0 auto;padding:24px 32px;">
+<div style="max-width:1400px;margin:0 auto;padding:24px 32px;" class="map-tab-container">
     <div style="position:relative;">
         <div class="map-header">
             <span>Precinct-Level Voter Map</span>
