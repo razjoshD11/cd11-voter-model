@@ -16,7 +16,7 @@ ratios rather than traditional "will you vote" likelihood rates.
 Input:  data/processed/precinct_universe.csv
         data/processed/demographic_turnout_rates.csv
         Feb 2026 poll crosstabs (Excel)
-        Sept 2025 poll slides (PDF — approximate extraction)
+        Sept 2025 poll crosstabs (Excel)
 
 Output: data/processed/calibration_weights.csv
 
@@ -41,6 +41,9 @@ OUTPUT_FILE = os.path.join(OUTPUT_DIR, "calibration_weights.csv")
 
 # February 2026 poll crosstabs (Excel)
 FEB_2026_POLL = "/Users/joshraznick/Desktop/Wiener/Polling/Crosstabs March 2026.xlsx"
+
+# September 2025 poll crosstabs (Excel)
+SEPT_2025_POLL = "/Users/joshraznick/Downloads/September 2025 Crosstabs.xlsx"
 
 # ── STEP 3A: Load voter file demographics (the "denominator") ────────────────
 print("=" * 70)
@@ -161,82 +164,65 @@ for grp, share in party_data.items():
 
 # ── STEP 3C: Extract September 2025 poll demographic composition ─────────────
 print("\n── SEPTEMBER 2025 POLL COMPOSITION ──")
-print("  Source: PDF slide deck (approximate extraction from subgroup labels)")
+print(f"  Source: {SEPT_2025_POLL}")
 
-# From the September 2025 slides, the demographic subgroup labels show:
-# Democrat (71%), Rep/NPP (29%)
-# White (68%), Asian or Pacific Islander (14%), Hispanic or Latino (12%)
-# Men: 18-49 (26%), Men: 50+ (25%), Women: 18-49 (21%), Women: 50+ (28%)
-#   => 18-49: 47%, 50+: 53%
-# Black percentage not directly shown in slides — approximate from remainder
+# Read the September 2025 Crosstabs sheet (same format as Feb 2026)
+df_sept = pd.read_excel(SEPT_2025_POLL, sheet_name="Crosstabs", header=None)
 
 sept_2025_shares = {}
 
 # --- Age ---
-# The Sept 2025 poll uses 18-49 / 50+ split, not our four buckets.
-# We'll distribute the 18-49 and 50+ shares proportionally using the voter
-# file's sub-distribution within each age range.
-sept_1849 = 0.47  # 18-49 combined
-sept_50plus = 0.53  # 50+ combined
+# Rows 685-689: Age breakdown (18-29, 30-39, 40-49, 50-64, 65+)
+# Map to our buckets: 18-29, 30-44 (combine 30-39 + 40-49), 45-64, 65+
+sept_age_data = {
+    "18-29": float(df_sept.iloc[685, 3]),                                          # 0.09
+    "30-44": float(df_sept.iloc[686, 3]) + float(df_sept.iloc[687, 3]),            # 0.21 + 0.17 = 0.38
+    "45-64": float(df_sept.iloc[688, 3]),                                          # 0.25
+    "65+": float(df_sept.iloc[689, 3]),                                            # 0.28
+}
+for grp, share in sept_age_data.items():
+    sept_2025_shares[("age", grp)] = share
 
-# Voter file ratios within 18-49: 18-29 and 30-44
-vf_1829 = voter_file_shares[("age", "18-29")]
-vf_3044 = voter_file_shares[("age", "30-44")]
-vf_4564 = voter_file_shares[("age", "45-64")]
-vf_65plus = voter_file_shares[("age", "65+")]
-
-ratio_1829_in_young = vf_1829 / (vf_1829 + vf_3044) if (vf_1829 + vf_3044) > 0 else 0.5
-ratio_3044_in_young = vf_3044 / (vf_1829 + vf_3044) if (vf_1829 + vf_3044) > 0 else 0.5
-ratio_4564_in_old = vf_4564 / (vf_4564 + vf_65plus) if (vf_4564 + vf_65plus) > 0 else 0.5
-ratio_65_in_old = vf_65plus / (vf_4564 + vf_65plus) if (vf_4564 + vf_65plus) > 0 else 0.5
-
-sept_2025_shares[("age", "18-29")] = sept_1849 * ratio_1829_in_young
-sept_2025_shares[("age", "30-44")] = sept_1849 * ratio_3044_in_young
-sept_2025_shares[("age", "45-64")] = sept_50plus * ratio_4564_in_old
-sept_2025_shares[("age", "65+")] = sept_50plus * ratio_65_in_old
-
-print("  Age composition (estimated from 18-49/50+ split):")
+print("  Age composition (from crosstabs):")
 for grp in ["18-29", "30-44", "45-64", "65+"]:
-    print(f"    {grp:20s}: {sept_2025_shares[('age', grp)]:.1%}")
+    print(f"    {grp:20s}: {sept_2025_shares[('age', grp)]:.0%}")
 
 # --- Race/Ethnicity ---
-# From slides: White (68%), API (14%), Hispanic/Latino (12%)
-# Black not shown directly; estimate as remainder after others
-sept_white = 0.68
-sept_asian = 0.14
-sept_latino = 0.12
-# The remaining ~ 6% is Black + Other/Unknown
-# Distribute proportionally from voter file
-vf_black = voter_file_shares[("race", "Black")]
-vf_other_unk = voter_file_shares[("race", "Other/Unknown")]
-remaining = 1.0 - sept_white - sept_asian - sept_latino
-black_ratio = vf_black / (vf_black + vf_other_unk) if (vf_black + vf_other_unk) > 0 else 0.5
-
-sept_2025_shares[("race", "White")] = sept_white
-sept_2025_shares[("race", "Asian")] = sept_asian
-sept_2025_shares[("race", "Latino/Hispanic")] = sept_latino
-sept_2025_shares[("race", "Black")] = remaining * black_ratio
-sept_2025_shares[("race", "Other/Unknown")] = remaining * (1 - black_ratio)
+# Rows 775-780: Hispanic/Latino, White, Black, Asian/PI, Something else, PNR
+# (same order as Feb poll: Hispanic is listed first)
+race_data_sept = {
+    "Latino/Hispanic": float(df_sept.iloc[775, 3]),                                # 0.123
+    "White": float(df_sept.iloc[776, 3]),                                          # 0.679
+    "Black": float(df_sept.iloc[777, 3]),                                          # 0.024
+    "Asian": float(df_sept.iloc[778, 3]),                                          # 0.142
+    "Other/Unknown": float(df_sept.iloc[779, 3]) + float(df_sept.iloc[780, 3]),    # something else + PNR
+}
+for grp, share in race_data_sept.items():
+    sept_2025_shares[("race", grp)] = share
 
 print("  Race composition:")
 for grp in ["White", "Asian", "Latino/Hispanic", "Black", "Other/Unknown"]:
     print(f"    {grp:20s}: {sept_2025_shares[('race', grp)]:.1%}")
 
 # --- Party ---
-# From slides: Democrat (71%), Rep/NPP (29%)
-# Split the non-Democratic share using voter file ratios
-sept_dem = 0.71
-sept_non_dem = 0.29
+# Rows 786-788: Democrat, Republican, NPP/Other
+sept_dem = float(df_sept.iloc[786, 3])     # 0.71
+sept_rep = float(df_sept.iloc[787, 3])     # 0.07
+sept_npp_other = float(df_sept.iloc[788, 3])  # 0.22
 
-vf_rep = voter_file_shares[("party", "Republican")]
-vf_npp = voter_file_shares[("party", "NPP")]
-vf_other_p = voter_file_shares[("party", "Other")]
-non_dem_total = vf_rep + vf_npp + vf_other_p
+# Split NPP/Other using voter file ratios (same logic as Feb poll)
+vf_npp_s = voter_file_shares[("party", "NPP")]
+vf_other_s = voter_file_shares[("party", "Other")]
+npp_other_total_s = vf_npp_s + vf_other_s
 
 sept_2025_shares[("party", "Democrat")] = sept_dem
-sept_2025_shares[("party", "Republican")] = sept_non_dem * (vf_rep / non_dem_total) if non_dem_total > 0 else 0
-sept_2025_shares[("party", "NPP")] = sept_non_dem * (vf_npp / non_dem_total) if non_dem_total > 0 else 0
-sept_2025_shares[("party", "Other")] = sept_non_dem * (vf_other_p / non_dem_total) if non_dem_total > 0 else 0
+sept_2025_shares[("party", "Republican")] = sept_rep
+if npp_other_total_s > 0:
+    sept_2025_shares[("party", "NPP")] = sept_npp_other * (vf_npp_s / npp_other_total_s)
+    sept_2025_shares[("party", "Other")] = sept_npp_other * (vf_other_s / npp_other_total_s)
+else:
+    sept_2025_shares[("party", "NPP")] = sept_npp_other
+    sept_2025_shares[("party", "Other")] = 0.0
 
 print("  Party composition:")
 for grp in ["Democrat", "Republican", "NPP", "Other"]:

@@ -833,8 +833,11 @@ support_tab_html = '''
     <div class="sub-content active" id="sub-overview">
         <div style="margin-bottom:20px;padding:16px 20px;background:#f8f9fa;border-radius:8px;font-size:13px;line-height:1.7;color:#374151;">
             <strong style="color:#191a4d;">Base</strong> voters are reliable Scott Wiener supporters \u2014 liberal-to-moderate Democrats, often LGBTQ+ allied, concentrated in Districts 2, 3, 6, 7, and 8.
+            <br><br>
             <strong style="color:#f89828;">Persuasion</strong> voters are reachable but not yet committed \u2014 moderate Democrats and NPP voters who could go either way based on campaign contact.
+            <br><br>
             <strong style="color:#94a3b8;">Opposition</strong> includes MAGA-aligned voters, likely Saikat Chakrabarti supporters, and strong conservatives who are unlikely to support Scott.
+            <br><br>
             <strong style="color:#dc2626;">Base Drop-off</strong> are base supporters with low turnout probability \u2014 the highest-ROI mobilization targets.
         </div>
         <div class="sup-cards" id="sup-overview-cards"></div>
@@ -1270,6 +1273,7 @@ const LAYER_CONFIG = {
 
 let _currentLayer = 'mean_support_score';
 let _geoLayer = null;
+let _distOverlay = null;
 let _geoLevel = 'precinct';
 let _hoodLabels = [];
 
@@ -1387,16 +1391,17 @@ function getGeoSource() {
 function renderGeoLayer(layerKey) {
     const map = window.leafletMap;
     if (_geoLayer) map.removeLayer(_geoLayer);
+    if (_distOverlay) { map.removeLayer(_distOverlay); _distOverlay = null; }
     const geoSource = getGeoSource();
-    const lineWeight = _geoLevel === 'precinct' ? 0.5 : (_geoLevel === 'district' ? 2 : 2.5);
-    const lineColor = _geoLevel === 'precinct' ? '#999' : '#191a4d';
+    const lineWeight = _geoLevel === 'precinct' ? 1 : (_geoLevel === 'district' ? 2.5 : 3);
+    const lineColor = _geoLevel === 'precinct' ? 'rgba(55,65,81,0.7)' : '#191a4d';
     _geoLayer = L.geoJSON(geoSource, {
         style: function(feature) {
             const val = getFeatureValue(feature, layerKey);
             return {
                 fillColor: getColor(val, layerKey),
                 weight: lineWeight,
-                opacity: _geoLevel === 'precinct' ? 0.6 : 0.9,
+                opacity: _geoLevel === 'precinct' ? 0.8 : 0.9,
                 color: lineColor,
                 fillOpacity: 0.8
             };
@@ -1434,6 +1439,13 @@ function renderGeoLayer(layerKey) {
             });
         }
     }).addTo(map);
+    // Add district boundary overlay on top when viewing precincts
+    if (_geoLevel === 'precinct' && typeof DISTRICT_GEO !== 'undefined') {
+        _distOverlay = L.geoJSON(DISTRICT_GEO, {
+            style: { fillColor: 'transparent', fillOpacity: 0, weight: 2.5, color: '#191a4d', opacity: 0.6, dashArray: '6,4' },
+            interactive: false
+        }).addTo(map);
+    }
     updateLegend(layerKey);
 }
 

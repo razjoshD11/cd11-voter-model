@@ -146,14 +146,19 @@ print("=" * 70)
 # - Geography handled via Supervisor District (13pt spread in crosstabs)
 # - Opposition explicitly identified via TS scores (Trump support, very progressive)
 #
-# Crosstab reference (EMC Research Feb 2026, n=800, Q10 Initial Ballot w/ leaners):
-#   Ideology:   Liberal 64.2% | Moderate 41.7% | Progressive 36.3% | Conservative 22.4%
-#   LGBTQ+:     LGBTQ+ 50.9% | Non-LGBTQ+ 42.8%
-#   Race:       Black 58.5% | API 49.9% | White 46.7% | Hispanic 29.2%
-#   Age:        18-29: 54.7% | 30-39: 44.7% | 40-49: 47.3% | 50-64: 43.9% | 65+: 41.6%
-#   Education:  College 46.7% | Non-college 35.9%
-#   Frequency:  New/Infreq 46.9% | Frequent 45.2% | Perfect 44.2%
-#   Geography:  BoS 2,3,6: 51.2% | BoS 7,8: 47.8% | BoS 5,9: 41.2% | BoS 1,4: 38.5%
+# Crosstab reference — BLENDED (60% Feb 2026, 40% Sept 2025):
+#   Feb 2026 (n=800, Q10 Initial Ballot w/ leaners):
+#     Ideology:   Liberal 64.2% | Moderate 41.7% | Progressive 36.3% | Conservative 22.4%
+#     Race:       Black 58.5% | API 49.9% | White 46.7% | Hispanic 29.2%
+#     Geography:  BoS 2,3,6: 51.2% | BoS 7,8: 47.8% | BoS 5,9: 41.2% | BoS 1,4: 38.5%
+#   Sept 2025 (n=500, Q18 Initial Wiener Vote, collapsed):
+#     Ideology:   Liberal 74.3% | Progressive 53.8% | Moderate 51.1% | Conservative 12.4%
+#     Race:       Black 75.2% | Hispanic 66.3% | API 63.1% | White 55.3%
+#     Geography:  BoS 5,9: 59.8% | BoS 2,3,6: 59.3% | BoS 7,8: 56.0% | BoS 1,4: 50.5%
+#   Blended Q18/Q10 support:
+#     Race:       Black 65.2% | API 55.2% | White 50.1% | Hispanic 44.0%
+#     Ideology:   Liberal 68.3% | Progressive 43.3% | Moderate 45.5% | Conservative 18.4%
+#     Geography:  BoS 2,3,6: 54.4% | BoS 5,9: 48.6% | BoS 7,8: 51.1% | BoS 1,4: 43.3%
 #
 # User direction: 50+ = slight Scott, under 30 = slight Saikat
 #   (Strategic view of where race is heading, not current snapshot)
@@ -214,23 +219,25 @@ vf['pts_lgbtq'] = np.select(lgbtq_conditions, lgbtq_values, default=0)
 print(f"  Factor 2 - LGBTQ+ Proxy (max 20): mean={vf['pts_lgbtq'].mean():.1f}")
 
 # --- FACTOR 3: Geography / Supervisor District (max +15) ---
-# Polling: BoS 2,3,6: 51.2%; BoS 7,8: 47.8%; BoS 5,9: 41.2%; BoS 10: 41.5%; BoS 1,4: 38.5%
-# 13pt spread — meaningful signal, especially District 8 (Castro — Wiener's home base)
-geo_map = {2: 15, 3: 15, 6: 15, 7: 12, 8: 12, 5: 5, 9: 5, 10: 5, 1: 0, 4: 0}
+# Blended polling: BoS 2,3,6: 54.4%; BoS 7,8: 51.1%; BoS 5,9: 48.6%; BoS 1,4: 43.3%
+# Sept 2025 showed BoS 5,9 much stronger (59.8%) than Feb (41.2%)
+# Bumped D5,D9 from 5 → 8 to reflect blended data; D10 stays at 5
+geo_map = {2: 15, 3: 15, 6: 15, 7: 12, 8: 12, 5: 8, 9: 8, 10: 5, 1: 0, 4: 0}
 vf['pts_geography'] = vf['CountySupervisorName'].map(geo_map).fillna(5)
 print(f"  Factor 3 - Geography (max 15): mean={vf['pts_geography'].mean():.1f}")
 
 # --- FACTOR 4: Race/Ethnicity (max +10) ---
-# Polling: API 49.9%, White 46.7%, Black 58.5% (small n=53), Hispanic 29.2%
-# User: White and Asian = slight Scott indicator
-# Black at 58.5% but n=53, treat cautiously
+# Blended polling: Black 65.2%, API 55.2%, White 50.1%, Hispanic 44.0%
+# Sept 2025 shows Hispanic support MUCH higher than Feb 2026 (66.3% vs 29.2%)
+# Blended 44% puts Hispanic in the persuasion range — give some points
+# Black small n in both polls; treat cautiously
 race_map = {
     'Asian or Pacific Islander': 10,
     'White': 8,
-    'Black': 6,           # High in polling but very small n
+    'Black': 6,           # High in both polls but very small n
+    'Hispanic or Latino': 4,  # Updated: blended 44% support (was 0 based on Feb only)
     'Native American': 3,
     'Uncoded': 3,
-    'Hispanic or Latino': 0,
 }
 vf['pts_race'] = vf['RaceName'].map(race_map).fillna(3)
 print(f"  Factor 4 - Race (max 10): mean={vf['pts_race'].mean():.1f}")

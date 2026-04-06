@@ -335,16 +335,16 @@ def build_memo():
         "California's 11th Congressional District (San Francisco, Supervisor "
         "Districts 1\u201310) ahead of the June 2026 Democratic primary election. "
         "The model assigns every registered voter a composite support score "
-        "(0\u2013100) calibrated against EMC Research polling and segments the "
-        "electorate into three strategic universes: Base, Persuasion, and "
-        "Opposition."
+        "(0\u2013100) calibrated against EMC Research polling (February 2026 "
+        "and September 2025) and segments the electorate into three strategic "
+        "universes: Base, Persuasion, and Opposition."
     )
 
     add_body(doc, "Key Findings:", bold=True, space_after=4)
 
     add_bullet(doc, "448,376 registered voters in CD-11 (Supervisor Districts 1\u201310)",
                bold_prefix="Total Electorate: ")
-    add_bullet(doc, "Base 170,727 (38.1%) | Persuasion 167,890 (37.4%) | Opposition 109,759 (24.5%)",
+    add_bullet(doc, "Base 177,212 (39.5%) | Persuasion 168,183 (37.5%) | Opposition 102,981 (23.0%)",
                bold_prefix="Universe Breakdown: ")
     add_bullet(doc, "Saikat Chakrabarti \u2014 progressive challenger with deep-left coalition",
                bold_prefix="Primary Opponent: ")
@@ -353,7 +353,7 @@ def build_memo():
         "LGBTQ+, White/API voters in Supervisor Districts 2, 3, 6, 7, and 8.",
         bold_prefix="Base Profile: ")
     add_bullet(doc,
-        "Mobilize Base drop-off voters (62,725 supporters with low turnout "
+        "Mobilize Base drop-off voters (66,155 supporters with low turnout "
         "probability) and persuade swing voters in Districts 1, 4, 5, and 9.",
         bold_prefix="Strategic Imperative: ")
 
@@ -361,9 +361,9 @@ def build_memo():
     doc.add_paragraph()
     summary_headers = ["Universe", "Voters", "Share", "Avg Score", "Avg Turnout"]
     summary_rows = [
-        ["Base", "170,727", "38.1%", "76.6", "52.1%"],
-        ["Persuasion", "167,890", "37.4%", "52.4", "32.5%"],
-        ["Opposition", "109,759", "24.5%", "40.7", "30.2%"],
+        ["Base", "177,212", "39.5%", "76.8", "51.7%"],
+        ["Persuasion", "168,183", "37.5%", "52.4", "32.0%"],
+        ["Opposition", "102,981", "23.0%", "42.1", "30.3%"],
         ["TOTAL", "448,376", "100.0%", "\u2014", "\u2014"],
     ]
     add_table_with_style(doc, summary_headers, summary_rows,
@@ -379,10 +379,11 @@ def build_memo():
     add_body(doc,
         "Each registered voter in CD-11 receives a composite support score "
         "(0\u2013100) derived from eight weighted factors, calibrated against "
-        "EMC Research polling crosstabs (February 2026, n=800). The model "
-        "integrates TargetSmart modeled data with geographic, demographic, "
-        "and behavioral indicators to estimate each voter\u2019s likelihood of "
-        "supporting Scott Wiener in a head-to-head primary."
+        "EMC Research polling crosstabs (February 2026, n=800; September "
+        "2025, n=500, weighted 60/40). The model integrates TargetSmart "
+        "modeled data with geographic, demographic, and behavioral "
+        "indicators to estimate each voter\u2019s likelihood of supporting "
+        "Scott Wiener in a head-to-head primary."
     )
 
     add_sub_heading(doc, "Scoring Factors")
@@ -433,7 +434,7 @@ def build_memo():
     add_heading_styled(doc, "3. Universe Profiles", level=1)
 
     # --- Base Universe ---
-    add_sub_heading(doc, "Base Universe (170,727 \u2014 38.1%)")
+    add_sub_heading(doc, "Base Universe (177,212 \u2014 39.5%)")
 
     add_body(doc,
         "The Base universe comprises voters most likely to support Scott Wiener "
@@ -443,23 +444,23 @@ def build_memo():
 
     base_headers = ["Metric", "Value"]
     base_rows = [
-        ["Average Support Score", "76.6"],
-        ["Average Turnout Probability", "52.1%"],
-        ["Democrat Registration", "77.8%"],
-        ["White", "64.1%"],
-        ["Asian/Pacific Islander", "29.9%"],
-        ["Female", "49.1%"],
-        ["Age 50+", "55.5%"],
-        ["Top District: D8 (Castro/Noe Valley)", "54.8% Base"],
-        ["District 7 (West Side)", "51.2% Base"],
-        ["District 2 (Marina/Pac Heights)", "49.7% Base"],
+        ["Average Support Score", "76.8"],
+        ["Average Turnout Probability", "51.7%"],
+        ["Democrat Registration", "77.7%"],
+        ["White", "63.0%"],
+        ["Asian/Pacific Islander", "29.4%"],
+        ["Female", "48.9%"],
+        ["Age 50+", "55.3%"],
+        ["Top District: D8 (Castro/Noe Valley)", "55.3% Base"],
+        ["District 7 (West Side)", "51.8% Base"],
+        ["District 2 (Marina/Pac Heights)", "50.0% Base"],
     ]
     add_table_with_style(doc, base_headers, base_rows,
                          col_widths=[3.5, 2.0])
 
     doc.add_paragraph()
     add_body(doc,
-        "Drop-off Base: 62,725 voters (36.7% of Base) are supporters with "
+        "Drop-off Base: 66,155 voters (37.3% of Base) are supporters with "
         "low turnout probability. These individuals are the campaign\u2019s "
         "highest-ROI mobilization targets \u2014 they support Scott but may not "
         "vote in a June primary without direct contact.",
@@ -469,7 +470,7 @@ def build_memo():
     doc.add_paragraph()
 
     # --- Persuasion Universe ---
-    add_sub_heading(doc, "Persuasion Universe (167,890 \u2014 37.4%)")
+    add_sub_heading(doc, "Persuasion Universe (168,183 \u2014 37.5%)")
 
     add_body(doc,
         "Persuasion voters are ideologically and demographically mixed. They "
@@ -480,11 +481,11 @@ def build_memo():
     pers_headers = ["Metric", "Value"]
     pers_rows = [
         ["Average Support Score", "52.4"],
-        ["Average Turnout Probability", "32.5%"],
-        ["Democrat Registration", "65.0%"],
-        ["White", "54.4%"],
-        ["Asian/Pacific Islander", "30.2%"],
-        ["Female", "46.1%"],
+        ["Average Turnout Probability", "32.0%"],
+        ["Democrat Registration", "64.9%"],
+        ["White", "54.0%"],
+        ["Asian/Pacific Islander", "30.3%"],
+        ["Female", "46.2%"],
     ]
     add_table_with_style(doc, pers_headers, pers_rows,
                          col_widths=[3.5, 2.0])
@@ -506,7 +507,7 @@ def build_memo():
     doc.add_paragraph()
 
     # --- Opposition Universe ---
-    add_sub_heading(doc, "Opposition Universe (109,759 \u2014 24.5%)")
+    add_sub_heading(doc, "Opposition Universe (102,981 \u2014 23.0%)")
 
     add_body(doc,
         "The Opposition universe includes voters unlikely to support Scott "
@@ -517,10 +518,10 @@ def build_memo():
 
     opp_headers = ["Sub-Segment", "Count", "% of Total", "Profile"]
     opp_rows = [
-        ["MAGA / Trump-aligned", "37,231", "8.3%", "High Trump Support score; unlikely Dem primary voters"],
-        ["Saikat-likely", "9,714", "2.2%", "Very progressive; aligned with Chakrabarti coalition"],
+        ["MAGA / Trump-aligned", "37,232", "8.3%", "High Trump Support score; unlikely Dem primary voters"],
+        ["Saikat-likely", "9,331", "2.1%", "Very progressive; aligned with Chakrabarti coalition"],
         ["Conservative", "3,994", "0.9%", "Non-MAGA right; low Dem primary engagement"],
-        ["Low-score Residual", "58,820", "13.1%", "Weak signals across all factors; low engagement"],
+        ["Low-score Residual", "52,424", "11.7%", "Weak signals across all factors; low engagement"],
     ]
     add_table_with_style(doc, opp_headers, opp_rows,
                          col_widths=[1.6, 0.9, 0.9, 2.8])
@@ -552,16 +553,16 @@ def build_memo():
         "Base %", "Persuasion %", "Opposition %"
     ]
     geo_rows = [
-        ["D8",  "Castro / Noe Valley",       "35,210", "19,295", "54.8%", "30.7%", "14.5%"],
-        ["D7",  "West Side / Twin Peaks",     "48,620", "24,893", "51.2%", "32.4%", "16.4%"],
-        ["D2",  "Marina / Pacific Heights",   "42,380", "21,063", "49.7%", "33.1%", "17.2%"],
-        ["D3",  "North Beach / Chinatown",    "39,750", "18,643", "46.9%", "34.2%", "18.9%"],
-        ["D6",  "SoMa / Tenderloin",          "51,890", "22,572", "43.5%", "35.8%", "20.7%"],
-        ["D9",  "Mission / Bernal Heights",   "46,310", "16,396", "35.4%", "38.9%", "25.7%"],
-        ["D1",  "Richmond",                   "44,520", "14,693", "33.0%", "41.2%", "25.8%"],
-        ["D4",  "Sunset / Parkside",          "43,870", "11,318", "25.8%", "44.6%", "29.6%"],
-        ["D5",  "Haight / Western Addition",  "46,780", "11,742", "25.1%", "40.9%", "34.0%"],
-        ["D10", "Bayview / Potrero Hill",     "49,046", "9,112",  "18.6%", "40.1%", "41.3%"],
+        ["D8",  "Castro / Noe Valley",       "58,030", "32,119", "55.3%", "33.8%", "10.9%"],
+        ["D7",  "West Side / Twin Peaks",     "50,330", "26,047", "51.8%", "30.1%", "18.1%"],
+        ["D2",  "Marina / Pacific Heights",   "48,283", "24,128", "50.0%", "34.7%", "15.4%"],
+        ["D3",  "North Beach / Chinatown",    "42,689", "20,163", "47.2%", "39.1%", "13.6%"],
+        ["D6",  "SoMa / Tenderloin",          "36,782", "16,226", "44.1%", "41.6%", "14.3%"],
+        ["D9",  "Mission / Bernal Heights",   "39,395", "13,584", "34.5%", "39.0%", "26.5%"],
+        ["D5",  "Haight / Western Addition",  "44,384", "13,563", "30.6%", "39.9%", "29.5%"],
+        ["D1",  "Richmond",                   "46,755", "12,467", "26.7%", "42.0%", "31.3%"],
+        ["D4",  "Sunset / Parkside",          "48,802", "12,648", "25.9%", "42.1%", "32.0%"],
+        ["D10", "Bayview / Potrero Hill",     "32,926", "6,267",  "19.0%", "34.6%", "46.4%"],
     ]
     add_table_with_style(doc, geo_headers, geo_rows,
                          col_widths=[0.5, 1.7, 0.8, 0.8, 0.7, 0.9, 0.9])
@@ -571,7 +572,7 @@ def build_memo():
     add_sub_heading(doc, "Key Geographic Takeaways")
     add_bullet(doc,
         "District 8 (Castro/Noe Valley) is Scott\u2019s strongest district at "
-        "54.8% Base \u2014 LGBTQ+ concentration, long-standing constituent relationships.",
+        "55.3% Base \u2014 LGBTQ+ concentration, long-standing constituent relationships.",
         bold_prefix="Stronghold: ")
     add_bullet(doc,
         "Districts 7 and 2 round out the top tier with roughly half of all "
@@ -579,17 +580,17 @@ def build_memo():
         bold_prefix="Core Base: ")
     add_bullet(doc,
         "District 5 (Haight/Western Addition) is the progressive stronghold "
-        "most favorable to Saikat Chakrabarti. Only 25.1% Base with 34.0% "
-        "Opposition \u2014 the campaign should contest moderate progressives here "
-        "but not over-invest.",
+        "most favorable to Saikat Chakrabarti. At 30.6% Base with 29.5% "
+        "Opposition \u2014 the blended polling data shows stronger-than-expected "
+        "support here; targeted outreach to moderate progressives is warranted.",
         bold_prefix="Competitive Progressive: ")
     add_bullet(doc,
         "District 4 (Sunset) is heavily API with the highest Persuasion share "
-        "(44.6%). Culturally tailored messaging could yield significant gains.",
+        "(42.1%). Culturally tailored messaging could yield significant gains.",
         bold_prefix="Persuasion Opportunity: ")
     add_bullet(doc,
-        "District 10 (Bayview/Potrero Hill) has the lowest Base share (18.6%) "
-        "and highest Opposition (41.3%). Resources should be allocated elsewhere.",
+        "District 10 (Bayview/Potrero Hill) has the lowest Base share (19.0%) "
+        "and highest Opposition (46.4%). Resources should be allocated elsewhere.",
         bold_prefix="Deprioritize: ")
 
     doc.add_page_break()
@@ -600,11 +601,11 @@ def build_memo():
     add_heading_styled(doc, "5. Strategic Recommendations", level=1)
 
     # --- A. Mobilization ---
-    add_sub_heading(doc, "A. Mobilization Priority: Drop-off Base (62,725 voters)")
+    add_sub_heading(doc, "A. Mobilization Priority: Drop-off Base (66,155 voters)")
 
     add_body(doc,
         "The single highest-ROI investment this campaign can make is mobilizing "
-        "the 62,725 Base voters with low turnout probability. These individuals "
+        "the 66,155 Base voters with low turnout probability. These individuals "
         "already support Scott but are unlikely to vote in a June primary "
         "without direct outreach. Every vote earned here comes from an existing "
         "supporter \u2014 no persuasion required."
@@ -632,7 +633,7 @@ def build_memo():
     add_sub_heading(doc, "B. Persuasion Targets: Priority Segments")
 
     add_body(doc,
-        "The Persuasion universe is large (167,890) but heterogeneous. "
+        "The Persuasion universe is large (168,183) but heterogeneous. "
         "The campaign should focus paid media, direct mail, and field "
         "resources on five high-impact sub-segments with tailored messaging."
     )
@@ -674,10 +675,10 @@ def build_memo():
 
     contain_headers = ["Segment", "Count", "Recommendation"]
     contain_rows = [
-        ["Saikat-likely", "9,714", "Do not engage \u2014 resource waste; firm opposition"],
-        ["MAGA Voters", "37,231", "Do not engage in primary; many won\u2019t vote in Dem primary"],
+        ["Saikat-likely", "9,331", "Do not engage \u2014 resource waste; firm opposition"],
+        ["MAGA Voters", "37,232", "Do not engage in primary; many won\u2019t vote in Dem primary"],
         ["Conservative", "3,994", "Minimal \u2014 ignore"],
-        ["Low-score Residual", "58,820", "Some recoverable with strong messaging; low priority"],
+        ["Low-score Residual", "52,424", "Some recoverable with strong messaging; low priority"],
     ]
     add_table_with_style(doc, contain_headers, contain_rows,
                          col_widths=[1.5, 1.0, 3.5])
