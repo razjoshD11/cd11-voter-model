@@ -1013,7 +1013,6 @@ th.num { text-align: right; }
             <label><input type="radio" name="mapLayer" value="base_pct" onchange="changeMapLayer(this.value)"> Base %</label>
             <label><input type="radio" name="mapLayer" value="opposition_pct" onchange="changeMapLayer(this.value)"> Opposition %</label>
             <label><input type="radio" name="mapLayer" value="persuasion_pct" onchange="changeMapLayer(this.value)"> Persuasion %</label>
-            <label><input type="radio" name="mapLayer" value="persuasion_priority_pct" onchange="changeMapLayer(this.value)"> Persuasion Priority %</label>
             <label><input type="radio" name="mapLayer" value="mean_turnout" onchange="changeMapLayer(this.value)"> Turnout Probability</label>
             <label><input type="radio" name="mapLayer" value="maga_pct" onchange="changeMapLayer(this.value)"> MAGA Density</label>
         </div>
@@ -1822,11 +1821,6 @@ const LAYER_CONFIG = {
         desc: 'Percentage of voters in the persuasion universe (score 40\u201364)',
         color: '#f89828', colorType: 'single', min: 15, max: 60, fmt: v => v.toFixed(1) + '%'
     },
-    persuasion_priority_pct: {
-        title: 'Persuasion Priority %',
-        desc: 'Percentage flagged as high-priority persuasion targets (API, Jewish, young male, renter)',
-        color: '#d97706', colorType: 'single', min: 0, max: 55, fmt: v => v.toFixed(1) + '%'
-    },
     mean_turnout: {
         title: 'Turnout Probability',
         desc: 'TargetSmart-modeled turnout probability for non-presidential primaries (0\u2013100)',
@@ -1945,11 +1939,11 @@ function getColor(value, layerKey) {
         // Very light mint (#f0fff0) -> deep green (#065f06)
         return `rgb(${Math.round(255-(255-6)*tp)},${Math.round(255-(255-95)*tp)},${Math.round(255-(255-6)*tp)})`;
     } else if (cfg.colorType === 'turnout') {
-        if (qv < 5) return '#f7f7f7';
+        if (qv < 5) return '#f0fbfb';
         const t = Math.min(1, (qv - 5) / (cfg.max - 5));
         const tp = Math.pow(t, pw);
-        // Very pale blue (#f0f4fa) -> deep navy (#0a2647)
-        return `rgb(${Math.round(245-(245-10)*tp)},${Math.round(248-(248-38)*tp)},${Math.round(255-(255-71)*tp)})`;
+        // Very light teal (#e0f7fa) -> rich vibrant teal (#0e7490)
+        return `rgb(${Math.round(240-(240-14)*tp)},${Math.round(250-(250-116)*tp)},${Math.round(252-(252-144)*tp)})`;
     } else {
         const t = Math.max(0, Math.min(1, (qv - cfg.min) / (cfg.max - cfg.min)));
         const tp = Math.pow(t, pw);
@@ -2070,7 +2064,7 @@ function updateLegend(layerKey) {
     } else if (cfg.colorType === 'single_green') {
         bar.style.background = 'linear-gradient(to right, #f0fff0, #065f06)';
     } else if (cfg.colorType === 'turnout') {
-        bar.style.background = 'linear-gradient(to right, #f7f7f7, #0a2647)';
+        bar.style.background = 'linear-gradient(to right, #e0f7fa, #0e7490)';
     } else {
         bar.style.background = 'linear-gradient(to right, #ffffff, ' + cfg.color + ')';
     }
