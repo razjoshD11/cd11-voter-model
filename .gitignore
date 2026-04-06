@@ -1,0 +1,15 @@
+# Generated output (rebuild with: python3 run_all.py)
+dashboard/turnout_dashboard.html
+
+# Processed data (rebuild with: python3 run_all.py)
+data/processed/*.csv
+
+# Keep directory structure
+!data/processed/.gitkeep
+!data/raw/.gitkeep
+!dashboard/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
