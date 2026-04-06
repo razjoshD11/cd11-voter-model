@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CD-11 Voter Targeting Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Besley:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: #191a4d;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  h1 {
+    font-family: 'Besley', serif;
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+  .subtitle {
+    color: #a9ccdf;
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+  .cards {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  a.card {
+    display: block;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    width: 320px;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.2s;
+  }
+  a.card:hover {
+    background: rgba(248,152,40,0.15);
+    border-color: #f89828;
+    transform: translateY(-3px);
+  }
+  .card h2 {
+    font-family: 'Besley', serif;
+    font-size: 1.4rem;
+    color: #f89828;
+    margin-bottom: 0.8rem;
+  }
+  .card p {
+    font-size: 0.95rem;
+    color: #a9ccdf;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+  <h1>CD-11 Voter Targeting</h1>
+  <p class="subtitle">San Francisco &mdash; June 2026 Democratic Primary</p>
+  <div class="cards">
+    <a class="card" href="dashboard.html">
+      <h2>Combined Dashboard</h2>
+      <p>Turnout model, support scoring, universe breakdowns, and interactive precinct map with 9 data layers.</p>
+    </a>
+    <a class="card" href="heatmap.html">
+      <h2>Support Heat Map</h2>
+      <p>Precinct-level support score visualization with diverging color scale.</p>
+    </a>
+  </div>
+</body>
+</html>
