@@ -155,6 +155,7 @@ for party, grp in df.groupby('Party'):
         'opposition_count': int((grp['universe'] == 'Opposition').sum()),
         'base_pct': round((grp['universe'] == 'Base').sum() / total * 100, 1),
     })
+party_data = [d for d in party_data if d['total'] >= 10]
 party_data.sort(key=lambda x: x['total'], reverse=True)
 demo_breakdowns['party'] = party_data
 
@@ -170,6 +171,7 @@ for race, grp in df.groupby('RaceName'):
         'opposition_count': int((grp['universe'] == 'Opposition').sum()),
         'base_pct': round((grp['universe'] == 'Base').sum() / total * 100, 1),
     })
+race_data = [d for d in race_data if d['total'] >= 10]
 race_data.sort(key=lambda x: x['total'], reverse=True)
 demo_breakdowns['race'] = race_data
 
@@ -186,6 +188,7 @@ for ag, grp in df.groupby('age_group'):
         'base_pct': round((grp['universe'] == 'Base').sum() / total * 100, 1),
     })
 # Sort by age group order
+age_data = [d for d in age_data if d['total'] >= 10]
 age_order = {'18-29': 0, '30-44': 1, '45-64': 2, '65+': 3, 'Unknown': 4}
 age_data.sort(key=lambda x: age_order.get(x['group'], 99))
 demo_breakdowns['age'] = age_data
@@ -196,44 +199,47 @@ opp_counts = df[df['universe'] == 'Opposition']['opposition_type'].value_counts(
 opposition_breakdown = []
 total_opp = sum(opp_counts.values())
 for otype, cnt in sorted(opp_counts.items(), key=lambda x: -x[1]):
-    opposition_breakdown.append({
-        'type': str(otype),
-        'count': int(cnt),
-        'pct': round(cnt / total_opp * 100, 1) if total_opp > 0 else 0,
-    })
+    if cnt >= 10:
+        opposition_breakdown.append({
+            'type': str(otype),
+            'count': int(cnt),
+            'pct': round(cnt / total_opp * 100, 1) if total_opp > 0 else 0,
+        })
 
 # 4E: Persuasion priority breakdown
 print("       Computing persuasion priorities ...")
 pers_df = df[df['persuasion_priority'] == True].copy()
 persuasion_segments = []
 
-# By party
-for party, grp in pers_df.groupby('Party'):
-    if len(grp) >= 100:
+# By age group
+for ag, grp in pers_df.groupby('age_group'):
+    if len(grp) >= 5000:
         persuasion_segments.append({
-            'segment': f'Party: {party}',
+            'segment': f'Age: {ag}',
             'count': len(grp),
             'mean_score': round(float(grp['support_score'].mean()), 1),
         })
 
-# By age group
-for ag, grp in pers_df.groupby('age_group'):
-    persuasion_segments.append({
-        'segment': f'Age: {ag}',
-        'count': len(grp),
-        'mean_score': round(float(grp['support_score'].mean()), 1),
-    })
-
 # By race
 for race, grp in pers_df.groupby('RaceName'):
-    if len(grp) >= 100:
+    if len(grp) >= 5000:
         persuasion_segments.append({
             'segment': f'Race: {race}',
             'count': len(grp),
             'mean_score': round(float(grp['support_score'].mean()), 1),
         })
 
-persuasion_segments.sort(key=lambda x: -x['count'])
+# By district
+for dist, grp in pers_df.groupby('district'):
+    if pd.notna(dist) and len(grp) >= 5000:
+        persuasion_segments.append({
+            'segment': f'District {int(dist)}',
+            'count': len(grp),
+            'mean_score': round(float(grp['support_score'].mean()), 1),
+        })
+
+# Sort by mean support score (likely supporter score), descending
+persuasion_segments.sort(key=lambda x: -x['mean_score'])
 
 # Overall totals
 totals = {
@@ -410,6 +416,57 @@ if geo is None:
             },
             "geometry": {"type": "Point", "coordinates": [-122.44, 37.76]}
         })
+
+# Build district-level GeoJSON by dissolving precincts into districts
+print("       Building district boundary GeoJSON ...")
+district_geo = {"type": "FeatureCollection", "features": []}
+# Group precinct features by district
+from collections import defaultdict
+dist_features = defaultdict(list)
+for feat in geo['features']:
+    prec_id = str(feat['properties'].get('precinct', ''))
+    dist = precinct_data.get(prec_id, {}).get('district', 0)
+    if dist and dist > 0:
+        dist_features[dist].append(feat)
+
+# For each district, collect all polygon coordinates (simplified merge)
+for dist_num in sorted(dist_features.keys()):
+    feats = dist_features[dist_num]
+    # Collect all polygons from all precincts in this district
+    all_polys = []
+    for f in feats:
+        geom = f['geometry']
+        if geom['type'] == 'Polygon':
+            all_polys.append(geom['coordinates'])
+        elif geom['type'] == 'MultiPolygon':
+            all_polys.extend(geom['coordinates'])
+    dd = district_map_data.get(str(dist_num), {})
+    district_geo['features'].append({
+        "type": "Feature",
+        "properties": {
+            "district": dist_num,
+            **dd,
+        },
+        "geometry": {"type": "MultiPolygon", "coordinates": all_polys}
+    })
+
+# Build citywide GeoJSON (all precincts as one feature)
+citywide_geo = {"type": "FeatureCollection", "features": []}
+all_city_polys = []
+for feat in geo['features']:
+    geom = feat['geometry']
+    if geom['type'] == 'Polygon':
+        all_city_polys.append(geom['coordinates'])
+    elif geom['type'] == 'MultiPolygon':
+        all_city_polys.extend(geom['coordinates'])
+citywide_geo['features'].append({
+    "type": "Feature",
+    "properties": {"district": "all", **citywide_data},
+    "geometry": {"type": "MultiPolygon", "coordinates": all_city_polys}
+})
+
+district_geo_str = json.dumps(district_geo, separators=(',', ':'))
+citywide_geo_str = json.dumps(citywide_geo, separators=(',', ':'))
 
 # Serialize GeoJSON compactly
 geo_json_str = json.dumps(geo, separators=(',', ':'))
@@ -734,7 +791,7 @@ nav_tabs_html = '''</div>
 <!-- ── TAB NAVIGATION ────────────────────────────────────────────── -->
 <div class="nav-tabs">
     <button class="active" onclick="switchTab('turnout', this)">Turnout Model</button>
-    <button onclick="switchTab('support', this)">Support &amp; Universes</button>
+    <button onclick="switchTab('support', this)">Universes</button>
     <button onclick="switchTab('map', this)">Interactive Map</button>
 </div>
 
@@ -774,6 +831,12 @@ support_tab_html = '''
 
     <!-- Overview Sub-tab -->
     <div class="sub-content active" id="sub-overview">
+        <div style="margin-bottom:20px;padding:16px 20px;background:#f8f9fa;border-radius:8px;font-size:13px;line-height:1.7;color:#374151;">
+            <strong style="color:#191a4d;">Base</strong> voters are reliable Scott Wiener supporters \u2014 liberal-to-moderate Democrats, often LGBTQ+ allied, concentrated in Districts 2, 3, 6, 7, and 8.
+            <strong style="color:#f89828;">Persuasion</strong> voters are reachable but not yet committed \u2014 moderate Democrats and NPP voters who could go either way based on campaign contact.
+            <strong style="color:#94a3b8;">Opposition</strong> includes MAGA-aligned voters, likely Saikat Chakrabarti supporters, and strong conservatives who are unlikely to support Scott.
+            <strong style="color:#dc2626;">Base Drop-off</strong> are base supporters with low turnout probability \u2014 the highest-ROI mobilization targets.
+        </div>
         <div class="sup-cards" id="sup-overview-cards"></div>
         <div class="chart-box">
             <h3>Support Score Distribution</h3>
@@ -803,12 +866,11 @@ support_tab_html = '''
     <!-- Demographics Sub-tab -->
     <div class="sub-content" id="sub-demographics">
         <div class="demo-toggle">
-            <button class="active" onclick="switchDemo('party', this)">Party</button>
-            <button onclick="switchDemo('race', this)">Race</button>
+            <button class="active" onclick="switchDemo('race', this)">Race</button>
             <button onclick="switchDemo('age', this)">Age</button>
         </div>
         <div class="chart-box">
-            <h3 id="demoChartTitle">Universe by Party</h3>
+            <h3 id="demoChartTitle">Universe by Race</h3>
             <div class="demo-chart-wrap"><canvas id="demoChart"></canvas></div>
         </div>
         <div class="chart-box">
@@ -886,8 +948,6 @@ map_tab_html = '''
             <label><input type="radio" name="mapLayer" value="mean_vote_freq" onchange="changeMapLayer(this.value)"> Vote Frequency</label>
             <label><input type="radio" name="mapLayer" value="maga_pct" onchange="changeMapLayer(this.value)"> MAGA Density</label>
             <label><input type="radio" name="mapLayer" value="voter_count" onchange="changeMapLayer(this.value)"> Registered Voters</label>
-            <hr style="margin:8px 0;border:none;border-top:1px solid #e5e7eb;">
-            <label style="font-size:11px;"><input type="checkbox" id="hoodToggle" onchange="toggleNeighborhoods(this.checked)" checked> Neighborhood Labels</label>
         </div>
         <div class="map-legend" id="mapLegend">
             <h4 id="legendTitle">Support Score</h4>
@@ -921,6 +981,8 @@ data_script = (
     'const MAP_GEO = ' + geo_json_str + ';\n'
     'const DISTRICT_MAP_DATA = ' + dist_map_json + ';\n'
     'const CITYWIDE_DATA = ' + city_json + ';\n'
+    'const DISTRICT_GEO = ' + district_geo_str + ';\n'
+    'const CITYWIDE_GEO = ' + citywide_geo_str + ';\n'
     '</script>\n'
 )
 
@@ -960,7 +1022,7 @@ function switchSubTab(subId, btn) {
 
 // ── Support Rendering ──────────────────────────────────────────────
 let _demoChart = null, _distChart = null, _histChart = null, _oppChart = null;
-let _currentDemo = 'party';
+let _currentDemo = 'race';
 
 function renderSupport() {
     const d = SUPPORT_DATA;
@@ -999,7 +1061,7 @@ function renderSupport() {
     renderDistrictTable(d.districts);
 
     // Demographics
-    renderDemoContent('party');
+    renderDemoContent('race');
 
     // Opposition
     renderOpposition(d.opposition);
@@ -1273,74 +1335,83 @@ function toggleNeighborhoods(show) {
 }
 
 function getFeatureValue(feature, layerKey) {
-    if (_geoLevel === 'precinct') {
-        return feature.properties[layerKey] || 0;
-    } else if (_geoLevel === 'district') {
-        const dist = feature.properties.district || feature.properties.supervisor_district;
-        const dd = DISTRICT_MAP_DATA[String(dist)];
-        return dd ? (dd[layerKey] || 0) : 0;
-    } else {
-        return CITYWIDE_DATA[layerKey] || 0;
-    }
+    return feature.properties[layerKey] || 0;
 }
 
 function getColor(value, layerKey) {
     const cfg = LAYER_CONFIG[layerKey];
+    // Quantize to 5-point steps for sharper visual contrast
+    const step = 5;
+    const qv = Math.floor(value / step) * step;
     if (cfg.colorType === 'diverging') {
         // Green (low/opposition) -> white (50) -> orange (high/Scott support)
         const mid = (cfg.max + cfg.min) / 2;
-        if (value >= mid) {
-            const t = Math.min(1, (value - mid) / (cfg.max - mid));
-            return `rgb(${255},${Math.round(255-(255-152)*t)},${Math.round(255-(255-40)*t)})`;
+        if (qv >= mid) {
+            const t = Math.min(1, (qv - mid) / (cfg.max - mid));
+            // Apply power curve for faster ramp
+            const tp = Math.pow(t, 0.6);
+            return `rgb(${255},${Math.round(255-(255-152)*tp)},${Math.round(255-(255-40)*tp)})`;
         } else {
-            const t = Math.min(1, (mid - value) / (mid - cfg.min));
-            return `rgb(${Math.round(255-(255-34)*t)},${Math.round(255-(255-139)*t)},${Math.round(255-(255-34)*t)})`;
+            const t = Math.min(1, (mid - qv) / (mid - cfg.min));
+            const tp = Math.pow(t, 0.6);
+            return `rgb(${Math.round(255-(255-34)*tp)},${Math.round(255-(255-139)*tp)},${Math.round(255-(255-34)*tp)})`;
         }
     } else if (cfg.colorType === 'single_orange') {
-        const t = Math.max(0, Math.min(1, (value - cfg.min) / (cfg.max - cfg.min)));
-        return `rgb(255,${Math.round(255-(255-152)*t)},${Math.round(255-(255-40)*t)})`;
+        const t = Math.max(0, Math.min(1, (qv - cfg.min) / (cfg.max - cfg.min)));
+        const tp = Math.pow(t, 0.6);
+        return `rgb(255,${Math.round(255-(255-152)*tp)},${Math.round(255-(255-40)*tp)})`;
     } else if (cfg.colorType === 'single_green') {
-        const t = Math.max(0, Math.min(1, (value - cfg.min) / (cfg.max - cfg.min)));
-        return `rgb(${Math.round(255-(255-22)*t)},${Math.round(255-(255-163)*t)},${Math.round(255-(255-74)*t)})`;
+        const t = Math.max(0, Math.min(1, (qv - cfg.min) / (cfg.max - cfg.min)));
+        const tp = Math.pow(t, 0.6);
+        return `rgb(${Math.round(255-(255-22)*tp)},${Math.round(255-(255-163)*tp)},${Math.round(255-(255-74)*tp)})`;
     } else if (cfg.colorType === 'turnout') {
-        if (value < 10) return '#f0f0f0';
-        const t = Math.min(1, (value - 10) / (cfg.max - 10));
-        return `rgb(${Math.round(220-206*t)},${Math.round(230-153*t)},${Math.round(245-99*t)})`;
+        if (qv < 10) return '#f0f0f0';
+        const t = Math.min(1, (qv - 10) / (cfg.max - 10));
+        const tp = Math.pow(t, 0.6);
+        return `rgb(${Math.round(220-206*tp)},${Math.round(230-153*tp)},${Math.round(245-99*tp)})`;
     } else {
-        const t = Math.max(0, Math.min(1, (value - cfg.min) / (cfg.max - cfg.min)));
+        const t = Math.max(0, Math.min(1, (qv - cfg.min) / (cfg.max - cfg.min)));
+        const tp = Math.pow(t, 0.6);
         const hex = cfg.color;
         const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-        return `rgb(${Math.round(255+(r-255)*t)},${Math.round(255+(g-255)*t)},${Math.round(255+(b-255)*t)})`;
+        return `rgb(${Math.round(255+(r-255)*tp)},${Math.round(255+(g-255)*tp)},${Math.round(255+(b-255)*tp)})`;
     }
+}
+
+function getGeoSource() {
+    if (_geoLevel === 'district') return DISTRICT_GEO;
+    if (_geoLevel === 'citywide') return CITYWIDE_GEO;
+    return MAP_GEO;
 }
 
 function renderGeoLayer(layerKey) {
     const map = window.leafletMap;
     if (_geoLayer) map.removeLayer(_geoLayer);
-    _geoLayer = L.geoJSON(MAP_GEO, {
+    const geoSource = getGeoSource();
+    const lineWeight = _geoLevel === 'precinct' ? 0.5 : (_geoLevel === 'district' ? 2 : 2.5);
+    const lineColor = _geoLevel === 'precinct' ? '#999' : '#191a4d';
+    _geoLayer = L.geoJSON(geoSource, {
         style: function(feature) {
             const val = getFeatureValue(feature, layerKey);
             return {
                 fillColor: getColor(val, layerKey),
-                weight: 0.5,
-                opacity: 0.6,
-                color: '#999',
+                weight: lineWeight,
+                opacity: _geoLevel === 'precinct' ? 0.6 : 0.9,
+                color: lineColor,
                 fillOpacity: 0.8
             };
         },
         onEachFeature: function(feature, layer) {
             layer.on('click', function(e) {
                 const p = feature.properties;
-                const d = (_geoLevel === 'district') ?
-                    DISTRICT_MAP_DATA[String(p.district || p.supervisor_district)] || p :
-                    (_geoLevel === 'citywide') ? CITYWIDE_DATA : p;
+                const d = (_geoLevel === 'district') ? p :
+                    (_geoLevel === 'citywide') ? p : p;
                 const label = _geoLevel === 'precinct' ?
                     `Precinct ${p.precinct || '?'}` :
-                    (_geoLevel === 'district' ? `Sup District ${p.district || p.supervisor_district || '?'}` : 'Citywide');
+                    (_geoLevel === 'district' ? `Sup District ${p.district || '?'}` : 'Citywide');
                 const popup = `
                     <div style="font-size:12px;line-height:1.6;">
                         <strong style="font-size:13px;">${label}</strong>
-                        ${_geoLevel==='precinct' && p.supervisor_district ? '<br><span style="color:#6b7280;">Sup District '+p.supervisor_district+'</span>' : ''}
                         <hr style="margin:6px 0;border:none;border-top:1px solid #e5e7eb;">
                         <b>Voters:</b> ${(d.voter_count||0).toLocaleString()}<br>
                         <b>Support Score:</b> ${(d.mean_support_score||0).toFixed(1)}<br>
@@ -1355,7 +1426,7 @@ function renderGeoLayer(layerKey) {
                 L.popup().setLatLng(e.latlng).setContent(popup).openOn(map);
             });
             layer.on('mouseover', function() {
-                this.setStyle({ weight: 2, color: '#191a4d' });
+                this.setStyle({ weight: lineWeight + 1.5, color: '#191a4d' });
                 this.bringToFront();
             });
             layer.on('mouseout', function() {
