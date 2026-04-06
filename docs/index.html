@@ -1874,19 +1874,23 @@ function renderGeoLayer(layerKey) {
     if (_distOverlay) { map.removeLayer(_distOverlay); _distOverlay = null; }
     const geoSource = getGeoSource();
     const isPrecinct = _geoLevel === 'precinct';
-    // For district/citywide: no stroke on fill layer (precinct lines hidden)
-    const fillWeight = isPrecinct ? 1 : 0;
-    const fillColor = isPrecinct ? 'rgba(55,65,81,0.7)' : 'transparent';
-    const fillOpac = isPrecinct ? 0.8 : 0;
     _geoLayer = L.geoJSON(geoSource, {
         style: function(feature) {
             const val = getFeatureValue(feature, layerKey);
+            if (isPrecinct) {
+                return {
+                    fillColor: getColor(val, layerKey),
+                    weight: 1,
+                    opacity: 0.8,
+                    color: 'rgba(55,65,81,0.7)',
+                    fillOpacity: 0.8
+                };
+            }
+            // District / citywide: colored fill, NO stroke at all
             return {
                 fillColor: getColor(val, layerKey),
-                weight: fillWeight,
-                opacity: fillOpac,
-                color: fillColor,
-                fillOpacity: 0.8
+                stroke: false,
+                fillOpacity: 0.85
             };
         },
         onEachFeature: function(feature, layer) {
@@ -1922,22 +1926,20 @@ function renderGeoLayer(layerKey) {
             });
         }
     }).addTo(map);
-    // Overlay boundary lines on top (no fill, just outlines)
-    if (typeof DISTRICT_GEO !== 'undefined') {
-        const bWeight = isPrecinct ? 2.5 : (_geoLevel === 'district' ? 2.5 : 0);
-        const bDash = isPrecinct ? '6,4' : '';
-        const bOpacity = isPrecinct ? 0.6 : 0.9;
-        if (bWeight > 0) {
-            _distOverlay = L.geoJSON(DISTRICT_GEO, {
-                style: { fillColor: 'transparent', fillOpacity: 0, weight: bWeight, color: '#191a4d', opacity: bOpacity, dashArray: bDash },
-                interactive: false
-            }).addTo(map);
-        }
-    }
-    // For citywide, add a single city boundary outline
-    if (_geoLevel === 'citywide' && typeof CITYWIDE_GEO !== 'undefined') {
+    // Overlay district boundary lines (no fill, just outlines)
+    if (_geoLevel === 'precinct' && typeof DISTRICT_GEO !== 'undefined') {
+        _distOverlay = L.geoJSON(DISTRICT_GEO, {
+            style: { fill: false, weight: 2.5, color: '#191a4d', opacity: 0.6, dashArray: '6,4' },
+            interactive: false
+        }).addTo(map);
+    } else if (_geoLevel === 'district' && typeof DISTRICT_GEO !== 'undefined') {
+        _distOverlay = L.geoJSON(DISTRICT_GEO, {
+            style: { fill: false, weight: 2.5, color: '#191a4d', opacity: 0.9 },
+            interactive: false
+        }).addTo(map);
+    } else if (_geoLevel === 'citywide' && typeof CITYWIDE_GEO !== 'undefined') {
         _distOverlay = L.geoJSON(CITYWIDE_GEO, {
-            style: { fillColor: 'transparent', fillOpacity: 0, weight: 3, color: '#191a4d', opacity: 0.9 },
+            style: { fill: false, weight: 3, color: '#191a4d', opacity: 0.9 },
             interactive: false
         }).addTo(map);
     }
