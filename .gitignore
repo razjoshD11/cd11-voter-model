@@ -1,8 +1,13 @@
-# Generated output (rebuild with: python3 run_all.py)
+# Large generated dashboards (rebuild with: python3 run_all.py)
 dashboard/turnout_dashboard.html
+dashboard/turnout_dashboard_v2.html
+dashboard/cd11_heatmap.html
 
-# Processed data (rebuild with: python3 run_all.py)
+# Processed voter data (contains PII — rebuild from source)
 data/processed/*.csv
+
+# Raw voter files (not included — obtain from VAN/TargetSmart)
+data/raw/
 
 # Keep directory structure
 !data/processed/.gitkeep
@@ -13,3 +18,10 @@ data/processed/*.csv
 __pycache__/
 *.pyc
 .venv/
+
+# macOS
+.DS_Store
+
+# Session artifacts
+FULL_CODEBASE.txt
+NEW_THREAD_PROMPT.md
