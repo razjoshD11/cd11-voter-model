@@ -417,11 +417,14 @@ if geo is None:
             "geometry": {"type": "Point", "coordinates": [-122.44, 37.76]}
         })
 
-# Build district-level GeoJSON by dissolving precincts into districts
-print("       Building district boundary GeoJSON ...")
+# Build district-level GeoJSON by dissolving precincts into districts (using Shapely)
+print("       Building district boundary GeoJSON (dissolving with Shapely) ...")
+from collections import defaultdict
+from shapely.geometry import shape, mapping
+from shapely.ops import unary_union
+
 district_geo = {"type": "FeatureCollection", "features": []}
 # Group precinct features by district
-from collections import defaultdict
 dist_features = defaultdict(list)
 for feat in geo['features']:
     prec_id = str(feat['properties'].get('precinct', ''))
@@ -429,41 +432,44 @@ for feat in geo['features']:
     if dist and dist > 0:
         dist_features[dist].append(feat)
 
-# For each district, collect all polygon coordinates (simplified merge)
+# For each district, dissolve precinct polygons into a single boundary
 for dist_num in sorted(dist_features.keys()):
     feats = dist_features[dist_num]
-    # Collect all polygons from all precincts in this district
-    all_polys = []
+    shapes = []
     for f in feats:
-        geom = f['geometry']
-        if geom['type'] == 'Polygon':
-            all_polys.append(geom['coordinates'])
-        elif geom['type'] == 'MultiPolygon':
-            all_polys.extend(geom['coordinates'])
+        try:
+            s = shape(f['geometry'])
+            if s.is_valid:
+                shapes.append(s)
+            else:
+                shapes.append(s.buffer(0))
+        except Exception:
+            pass
+    dissolved = unary_union(shapes)
     dd = district_map_data.get(str(dist_num), {})
     district_geo['features'].append({
         "type": "Feature",
-        "properties": {
-            "district": dist_num,
-            **dd,
-        },
-        "geometry": {"type": "MultiPolygon", "coordinates": all_polys}
+        "properties": {"district": dist_num, **dd},
+        "geometry": mapping(dissolved)
     })
 
-# Build citywide GeoJSON (all precincts as one feature)
-citywide_geo = {"type": "FeatureCollection", "features": []}
-all_city_polys = []
+# Build citywide GeoJSON (dissolve all precincts into one boundary)
+all_shapes = []
 for feat in geo['features']:
-    geom = feat['geometry']
-    if geom['type'] == 'Polygon':
-        all_city_polys.append(geom['coordinates'])
-    elif geom['type'] == 'MultiPolygon':
-        all_city_polys.extend(geom['coordinates'])
-citywide_geo['features'].append({
+    try:
+        s = shape(feat['geometry'])
+        if s.is_valid:
+            all_shapes.append(s)
+        else:
+            all_shapes.append(s.buffer(0))
+    except Exception:
+        pass
+city_dissolved = unary_union(all_shapes)
+citywide_geo = {"type": "FeatureCollection", "features": [{
     "type": "Feature",
     "properties": {"district": "all", **citywide_data},
-    "geometry": {"type": "MultiPolygon", "coordinates": all_city_polys}
-})
+    "geometry": mapping(city_dissolved)
+}]}
 
 district_geo_str = json.dumps(district_geo, separators=(',', ':'))
 citywide_geo_str = json.dumps(citywide_geo, separators=(',', ':'))
