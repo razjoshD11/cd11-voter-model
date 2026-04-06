@@ -322,6 +322,7 @@ for dist in sorted(df['district'].dropna().unique()):
         'opposition_pct': round(float((sub['universe'] == 'Opposition').sum() / total * 100), 1),
         'persuasion_pct': round(float((sub['universe'] == 'Persuasion').sum() / total * 100), 1),
         'maga_pct': round(float(sub['is_maga'].sum() / total * 100), 1),
+        'base_dropoff_pct': round(float(sub['base_dropoff'].sum() / total * 100), 1),
         'persuasion_priority_pct': round(float(sub['persuasion_priority'].sum() / total * 100), 1),
         'mean_vote_freq': round(float(sub['vote_frequency_score'].mean()), 1),
     }
@@ -334,6 +335,7 @@ citywide_data = {
     'opposition_pct': round(float((df['universe'] == 'Opposition').sum() / len(df) * 100), 1),
     'persuasion_pct': round(float((df['universe'] == 'Persuasion').sum() / len(df) * 100), 1),
     'maga_pct': round(float(df['is_maga'].sum() / len(df) * 100), 1),
+    'base_dropoff_pct': round(float(df['base_dropoff'].sum() / len(df) * 100), 1),
     'persuasion_priority_pct': round(float(df['persuasion_priority'].sum() / len(df) * 100), 1),
     'mean_vote_freq': round(float(df['vote_frequency_score'].mean()), 1),
 }
@@ -968,6 +970,7 @@ map_tab_html = '''
             <h4>Data Layer</h4>
             <label><input type="radio" name="mapLayer" value="mean_support_score" checked onchange="changeMapLayer(this.value)"> Support Score</label>
             <label><input type="radio" name="mapLayer" value="base_pct" onchange="changeMapLayer(this.value)"> Base %</label>
+            <label><input type="radio" name="mapLayer" value="base_dropoff_pct" onchange="changeMapLayer(this.value)"> Base Drop-off %</label>
             <label><input type="radio" name="mapLayer" value="opposition_pct" onchange="changeMapLayer(this.value)"> Opposition %</label>
             <label><input type="radio" name="mapLayer" value="persuasion_pct" onchange="changeMapLayer(this.value)"> Persuasion %</label>
             <label><input type="radio" name="mapLayer" value="persuasion_priority_pct" onchange="changeMapLayer(this.value)"> Persuasion Priority %</label>
@@ -1258,6 +1261,11 @@ const LAYER_CONFIG = {
         desc: 'Percentage of voters assigned to Scott Wiener\u2019s base universe (score \u2265 65)',
         color: '#f89828', colorType: 'single_orange', min: 0, max: 100, fmt: v => v.toFixed(1) + '%'
     },
+    base_dropoff_pct: {
+        title: 'Base Drop-off %',
+        desc: 'Percentage of voters in the Base universe with low turnout probability (< 45)',
+        color: '#e05a00', colorType: 'single_orange', min: 0, max: 30, fmt: v => v.toFixed(1) + '%'
+    },
     opposition_pct: {
         title: 'Opposition %',
         desc: 'Percentage of voters identified as opposition (MAGA + Saikat supporters + conservative)',
@@ -1447,6 +1455,7 @@ function renderGeoLayer(layerKey) {
                         <b>Vote Freq:</b> ${(p.mean_vote_freq||0).toFixed(1)}<br>
                         <hr style="margin:6px 0;border:none;border-top:1px solid #e5e7eb;">
                         <b>Base:</b> ${(p.base_pct||0).toFixed(1)}%<br>
+                        <b>Base Drop-off:</b> ${(p.base_dropoff_pct||0).toFixed(1)}%<br>
                         <b>Persuasion:</b> ${(p.persuasion_pct||0).toFixed(1)}%<br>
                         <b>Opposition:</b> ${(p.opposition_pct||0).toFixed(1)}%<br>
                         <b>MAGA:</b> ${(p.maga_pct||0).toFixed(1)}%
