@@ -1393,56 +1393,71 @@ function renderGeoLayer(layerKey) {
     if (_geoLayer) map.removeLayer(_geoLayer);
     if (_distOverlay) { map.removeLayer(_distOverlay); _distOverlay = null; }
     const geoSource = getGeoSource();
-    const lineWeight = _geoLevel === 'precinct' ? 1 : (_geoLevel === 'district' ? 2.5 : 3);
-    const lineColor = _geoLevel === 'precinct' ? 'rgba(55,65,81,0.7)' : '#191a4d';
+    const isPrecinct = _geoLevel === 'precinct';
+    // For district/citywide: no stroke on fill layer (precinct lines hidden)
+    const fillWeight = isPrecinct ? 1 : 0;
+    const fillColor = isPrecinct ? 'rgba(55,65,81,0.7)' : 'transparent';
+    const fillOpac = isPrecinct ? 0.8 : 0;
     _geoLayer = L.geoJSON(geoSource, {
         style: function(feature) {
             const val = getFeatureValue(feature, layerKey);
             return {
                 fillColor: getColor(val, layerKey),
-                weight: lineWeight,
-                opacity: _geoLevel === 'precinct' ? 0.8 : 0.9,
-                color: lineColor,
+                weight: fillWeight,
+                opacity: fillOpac,
+                color: fillColor,
                 fillOpacity: 0.8
             };
         },
         onEachFeature: function(feature, layer) {
             layer.on('click', function(e) {
                 const p = feature.properties;
-                const d = (_geoLevel === 'district') ? p :
-                    (_geoLevel === 'citywide') ? p : p;
-                const label = _geoLevel === 'precinct' ?
+                const label = isPrecinct ?
                     `Precinct ${p.precinct || '?'}` :
                     (_geoLevel === 'district' ? `Sup District ${p.district || '?'}` : 'Citywide');
                 const popup = `
                     <div style="font-size:12px;line-height:1.6;">
                         <strong style="font-size:13px;">${label}</strong>
                         <hr style="margin:6px 0;border:none;border-top:1px solid #e5e7eb;">
-                        <b>Voters:</b> ${(d.voter_count||0).toLocaleString()}<br>
-                        <b>Support Score:</b> ${(d.mean_support_score||0).toFixed(1)}<br>
-                        <b>Turnout:</b> ${(d.mean_turnout||0).toFixed(1)}<br>
-                        <b>Vote Freq:</b> ${(d.mean_vote_freq||0).toFixed(1)}<br>
+                        <b>Voters:</b> ${(p.voter_count||0).toLocaleString()}<br>
+                        <b>Support Score:</b> ${(p.mean_support_score||0).toFixed(1)}<br>
+                        <b>Turnout:</b> ${(p.mean_turnout||0).toFixed(1)}<br>
+                        <b>Vote Freq:</b> ${(p.mean_vote_freq||0).toFixed(1)}<br>
                         <hr style="margin:6px 0;border:none;border-top:1px solid #e5e7eb;">
-                        <b>Base:</b> ${(d.base_pct||0).toFixed(1)}%<br>
-                        <b>Persuasion:</b> ${(d.persuasion_pct||0).toFixed(1)}%<br>
-                        <b>Opposition:</b> ${(d.opposition_pct||0).toFixed(1)}%<br>
-                        <b>MAGA:</b> ${(d.maga_pct||0).toFixed(1)}%
+                        <b>Base:</b> ${(p.base_pct||0).toFixed(1)}%<br>
+                        <b>Persuasion:</b> ${(p.persuasion_pct||0).toFixed(1)}%<br>
+                        <b>Opposition:</b> ${(p.opposition_pct||0).toFixed(1)}%<br>
+                        <b>MAGA:</b> ${(p.maga_pct||0).toFixed(1)}%
                     </div>`;
                 L.popup().setLatLng(e.latlng).setContent(popup).openOn(map);
             });
             layer.on('mouseover', function() {
-                this.setStyle({ weight: lineWeight + 1.5, color: '#191a4d' });
-                this.bringToFront();
+                if (isPrecinct) {
+                    this.setStyle({ weight: 2.5, color: '#191a4d' });
+                    this.bringToFront();
+                }
             });
             layer.on('mouseout', function() {
-                _geoLayer.resetStyle(this);
+                if (isPrecinct) _geoLayer.resetStyle(this);
             });
         }
     }).addTo(map);
-    // Add district boundary overlay on top when viewing precincts
-    if (_geoLevel === 'precinct' && typeof DISTRICT_GEO !== 'undefined') {
-        _distOverlay = L.geoJSON(DISTRICT_GEO, {
-            style: { fillColor: 'transparent', fillOpacity: 0, weight: 2.5, color: '#191a4d', opacity: 0.6, dashArray: '6,4' },
+    // Overlay boundary lines on top (no fill, just outlines)
+    if (typeof DISTRICT_GEO !== 'undefined') {
+        const bWeight = isPrecinct ? 2.5 : (_geoLevel === 'district' ? 2.5 : 0);
+        const bDash = isPrecinct ? '6,4' : '';
+        const bOpacity = isPrecinct ? 0.6 : 0.9;
+        if (bWeight > 0) {
+            _distOverlay = L.geoJSON(DISTRICT_GEO, {
+                style: { fillColor: 'transparent', fillOpacity: 0, weight: bWeight, color: '#191a4d', opacity: bOpacity, dashArray: bDash },
+                interactive: false
+            }).addTo(map);
+        }
+    }
+    // For citywide, add a single city boundary outline
+    if (_geoLevel === 'citywide' && typeof CITYWIDE_GEO !== 'undefined') {
+        _distOverlay = L.geoJSON(CITYWIDE_GEO, {
+            style: { fillColor: 'transparent', fillOpacity: 0, weight: 3, color: '#191a4d', opacity: 0.9 },
             interactive: false
         }).addTo(map);
     }
