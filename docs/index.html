@@ -716,12 +716,12 @@ th.num { text-align: right; }
                     <th class="num">Registered</th>
                     <th class="num">Est. Ballots</th>
                     <th class="num">Turnout %</th>
-                    <th class="num">vs Jun 2018</th>
-                    <th class="num">vs Jun 2022</th>
-                    <th class="num">vs Mar 2024</th>
-                    <th class="num">vs Nov 2018</th>
-                    <th class="num">vs Nov 2022</th>
-                    <th class="num">vs Nov 2024</th>
+                    <th class="num">Jun 2018</th>
+                    <th class="num">Jun 2022</th>
+                    <th class="num">Mar 2024</th>
+                    <th class="num">Nov 2018</th>
+                    <th class="num">Nov 2022</th>
+                    <th class="num">Nov 2024</th>
                 </tr>
             </thead>
             <tbody id="scenario_tbody"></tbody>
@@ -1221,12 +1221,12 @@ function renderScenarioTable() {
             <td class="num">${fmt(row.registered_voters)}</td>
             <td class="num">${fmt(row.estimated_ballots)}</td>
             <td class="num">${fmtPct(row.estimated_turnout_pct)}</td>
-            <td class="num ${deltaClass(row.vs_jun2018)}">${fmtDelta(row.vs_jun2018)}</td>
-            <td class="num ${deltaClass(row.vs_jun2022)}">${fmtDelta(row.vs_jun2022)}</td>
-            <td class="num ${deltaClass(row.vs_mar2024)}">${fmtDelta(row.vs_mar2024)}</td>
-            <td class="num ${deltaClass(row.vs_nov2018)}">${fmtDelta(row.vs_nov2018)}</td>
-            <td class="num ${deltaClass(row.vs_nov2022)}">${fmtDelta(row.vs_nov2022)}</td>
-            <td class="num ${deltaClass(row.vs_nov2024)}">${fmtDelta(row.vs_nov2024)}</td>
+            <td class="num">${fmtPct(row.historical_jun2018_pct)}</td>
+            <td class="num">${fmtPct(row.historical_jun2022_pct)}</td>
+            <td class="num">${fmtPct(row.historical_mar2024_pct)}</td>
+            <td class="num">${fmtPct(row.historical_nov2018_pct)}</td>
+            <td class="num">${fmtPct(row.historical_nov2022_pct)}</td>
+            <td class="num">${fmtPct(row.historical_nov2024_pct)}</td>
         `;
         tbody.appendChild(tr);
     });
