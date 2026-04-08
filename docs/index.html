@@ -164,6 +164,8 @@ body {
 }
 .card .positive { color: #059669; }
 .card .negative { color: #dc2626; }
+.hist-higher { color: #059669; }
+.hist-lower { color: #dc2626; }
 
 /* ── SECTION ────────────────────────────────────────────────────── */
 .section {
@@ -1205,6 +1207,10 @@ function renderCards() {
 }
 
 // ── Render: Scenario Table ─────────────────────────────────────────
+function histClass(hist, proj) {
+    if (hist == null || isNaN(hist) || proj == null || isNaN(proj)) return '';
+    return hist > proj ? 'hist-higher' : hist < proj ? 'hist-lower' : '';
+}
 function renderScenarioTable() {
     const rows = getGeoRows(state.geography, state.election);
     const order = ['HIGH', 'EXPECTED', 'LOW'];
@@ -1214,19 +1220,20 @@ function renderScenarioTable() {
     order.forEach(sc => {
         const row = rows.find(r => r.scenario === sc);
         if (!row) return;
+        const p = row.estimated_turnout_pct;
         const tr = document.createElement('tr');
         if (sc === state.scenario) tr.className = 'highlight';
         tr.innerHTML = `
             <td>${sc}</td>
             <td class="num">${fmt(row.registered_voters)}</td>
             <td class="num">${fmt(row.estimated_ballots)}</td>
-            <td class="num">${fmtPct(row.estimated_turnout_pct)}</td>
-            <td class="num">${fmtPct(row.historical_jun2018_pct)}</td>
-            <td class="num">${fmtPct(row.historical_jun2022_pct)}</td>
-            <td class="num">${fmtPct(row.historical_mar2024_pct)}</td>
-            <td class="num">${fmtPct(row.historical_nov2018_pct)}</td>
-            <td class="num">${fmtPct(row.historical_nov2022_pct)}</td>
-            <td class="num">${fmtPct(row.historical_nov2024_pct)}</td>
+            <td class="num">${fmtPct(p)}</td>
+            <td class="num ${histClass(row.historical_jun2018_pct, p)}">${fmtPct(row.historical_jun2018_pct)}</td>
+            <td class="num ${histClass(row.historical_jun2022_pct, p)}">${fmtPct(row.historical_jun2022_pct)}</td>
+            <td class="num ${histClass(row.historical_mar2024_pct, p)}">${fmtPct(row.historical_mar2024_pct)}</td>
+            <td class="num ${histClass(row.historical_nov2018_pct, p)}">${fmtPct(row.historical_nov2018_pct)}</td>
+            <td class="num ${histClass(row.historical_nov2022_pct, p)}">${fmtPct(row.historical_nov2022_pct)}</td>
+            <td class="num ${histClass(row.historical_nov2024_pct, p)}">${fmtPct(row.historical_nov2024_pct)}</td>
         `;
         tbody.appendChild(tr);
     });
